@@ -1,5 +1,7 @@
 package com.mabotalb.book_network_api.user;
 
+import com.mabotalb.book_network_api.book.Book;
+import com.mabotalb.book_network_api.history.BookTransactionHistory;
 import com.mabotalb.book_network_api.role.Role;
 import jakarta.persistence.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -50,6 +52,9 @@ public class User implements UserDetails, Principal {
 
     @ManyToMany(fetch = FetchType.EAGER)
     private List<Role> roles;
+
+    @OneToMany(mappedBy = "owner")
+    private List<Book> books;
 
     @CreatedDate
     @Column(nullable = false, updatable = false)
