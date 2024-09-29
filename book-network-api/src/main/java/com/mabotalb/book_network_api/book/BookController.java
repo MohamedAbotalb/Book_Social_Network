@@ -63,4 +63,12 @@ public class BookController {
     ) {
         return ResponseEntity.ok(this.bookService.findAllReturnedBooks(page, size, connectedUser));
     }
+
+    @PatchMapping("/sharable/{book-id}")
+    public ResponseEntity<Long> updateSharableStatus(
+            @PathVariable("book-id") Long bookId,
+            Authentication connectedUser
+    ) {
+        return ResponseEntity.ok(this.bookService.updateSharableStatus(bookId, connectedUser));
+    }
 }

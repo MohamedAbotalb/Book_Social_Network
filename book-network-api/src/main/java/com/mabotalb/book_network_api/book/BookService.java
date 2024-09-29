@@ -1,6 +1,7 @@
 package com.mabotalb.book_network_api.book;
 
 import com.mabotalb.book_network_api.common.PageResponse;
+import com.mabotalb.book_network_api.exception.OperationNotPermittedException;
 import com.mabotalb.book_network_api.file.FileStorageService;
 import com.mabotalb.book_network_api.history.BookTransactionHistory;
 import com.mabotalb.book_network_api.history.BookTransactionHistoryRepository;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 
 import static com.mabotalb.book_network_api.book.BookSpecification.withOwnerId;
 
@@ -116,5 +118,17 @@ public class BookService {
                 allReturnedBooks.isFirst(),
                 allReturnedBooks.isLast()
         );
+    }
+
+    public Long updateSharableStatus(Long bookId, Authentication connectedUser) {
+        Book book = this.bookRepository.findById(bookId)
+                .orElseThrow(() -> new EntityNotFoundException("Book not found with ID: " + bookId));
+        User user = (User) connectedUser.getPrincipal();
+        if (!Objects.equals(book.getOwner().getId(), user.getId())) {
+            throw new OperationNotPermittedException("You cannot update others books sharable status");
+        }
+        book.setSharable(!book.isSharable());
+        this.bookRepository.save(book);
+        return bookId;
     }
 }
