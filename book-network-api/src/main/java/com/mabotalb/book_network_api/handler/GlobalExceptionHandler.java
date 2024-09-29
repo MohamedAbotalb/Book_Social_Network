@@ -1,7 +1,11 @@
 package com.mabotalb.book_network_api.handler;
 
+import com.mabotalb.book_network_api.exception.ExpiredTokenException;
+import com.mabotalb.book_network_api.exception.InvalidTokenException;
+import com.mabotalb.book_network_api.exception.NotEqualPasswordsException;
 import com.mabotalb.book_network_api.exception.OperationNotPermittedException;
 import jakarta.mail.MessagingException;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
@@ -80,8 +84,58 @@ public class GlobalExceptionHandler {
                 );
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ExceptionResponse> handleException(IllegalArgumentException ex) {
+        return ResponseEntity.status(BAD_REQUEST)
+                .body(
+                        ExceptionResponse.builder()
+                                .error(ex.getMessage())
+                                .build()
+                );
+    }
+
     @ExceptionHandler(OperationNotPermittedException.class)
     public ResponseEntity<ExceptionResponse> handleException(OperationNotPermittedException ex) {
+        return ResponseEntity.status(BAD_REQUEST)
+                .body(
+                        ExceptionResponse.builder()
+                                .error(ex.getMessage())
+                                .build()
+                );
+    }
+
+    @ExceptionHandler(EntityNotFoundException.class)
+    public ResponseEntity<ExceptionResponse> handleException(EntityNotFoundException ex) {
+        return ResponseEntity.status(BAD_REQUEST)
+                .body(
+                        ExceptionResponse.builder()
+                                .error(ex.getMessage())
+                                .build()
+                );
+    }
+
+    @ExceptionHandler(InvalidTokenException.class)
+    public ResponseEntity<ExceptionResponse> handleException(InvalidTokenException ex) {
+        return ResponseEntity.status(BAD_REQUEST)
+                .body(
+                        ExceptionResponse.builder()
+                                .error(ex.getMessage())
+                                .build()
+                );
+    }
+
+    @ExceptionHandler(ExpiredTokenException.class)
+    public ResponseEntity<ExceptionResponse> handleException(ExpiredTokenException ex) {
+        return ResponseEntity.status(BAD_REQUEST)
+                .body(
+                        ExceptionResponse.builder()
+                                .error(ex.getMessage())
+                                .build()
+                );
+    }
+
+    @ExceptionHandler(NotEqualPasswordsException.class)
+    public ResponseEntity<ExceptionResponse> handleException(NotEqualPasswordsException ex) {
         return ResponseEntity.status(BAD_REQUEST)
                 .body(
                         ExceptionResponse.builder()
