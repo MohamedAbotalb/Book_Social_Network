@@ -16,6 +16,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Objects;
@@ -128,6 +129,20 @@ public class BookService {
             throw new OperationNotPermittedException("You cannot update others books sharable status");
         }
         book.setSharable(!book.isSharable());
+        this.bookRepository.save(book);
+        return bookId;
+    }
+
+    public Long updateArchivedStatus(Long bookId, Authentication connectedUser) {
+        Book book = this.bookRepository.findById(bookId)
+                .orElseThrow(() -> new EntityNotFoundException("Book not found with ID: " + bookId));
+        User user = (User) connectedUser.getPrincipal();
+
+        // Check if the user isn't the owner of this book
+        if (!Objects.equals(book.getOwner().getId(), user.getId())) {
+            throw new OperationNotPermittedException("You cannot update others books archived status");
+        }
+        book.setArchived(!book.isArchived());
         this.bookRepository.save(book);
         return bookId;
     }
