@@ -18,7 +18,7 @@ import io.swagger.v3.oas.annotations.servers.Server;
                         email = "mohamed.abotalb277@gmail.com"
                 ),
                 title = "Book Network API",
-                description = "API for managing books, users, and feedbacks",
+                description = "API for managing users, books, and feedbacks",
                 version = "1.0",
                 license = @License(
                         name = "Apache 2.0",
