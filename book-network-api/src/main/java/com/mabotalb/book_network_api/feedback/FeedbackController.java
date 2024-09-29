@@ -1,5 +1,6 @@
 package com.mabotalb.book_network_api.feedback;
 
+import com.mabotalb.book_network_api.common.PageResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,5 +22,15 @@ public class FeedbackController {
             Authentication connectedUser
     ) {
         return ResponseEntity.ok(this.feedbackService.save(request, connectedUser));
+    }
+
+    @GetMapping("/book/{book-id}")
+    public ResponseEntity<PageResponse<FeedbackResponse>> findAllFeedbacksByBook(
+            @PathVariable("book-id") Long bookId,
+            @RequestParam(name = "page", defaultValue = "0", required = false) int page,
+            @RequestParam(name = "size", defaultValue = "10", required = false) int size,
+            Authentication connectedUser
+    ) {
+        return ResponseEntity.ok(this.feedbackService.findAllFeedbacksByBook(bookId, page, size, connectedUser));
     }
 }
