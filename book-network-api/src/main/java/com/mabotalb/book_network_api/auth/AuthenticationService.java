@@ -2,6 +2,9 @@ package com.mabotalb.book_network_api.auth;
 
 import com.mabotalb.book_network_api.email.EmailService;
 import com.mabotalb.book_network_api.email.EmailTemplateName;
+import com.mabotalb.book_network_api.exception.ExpiredTokenException;
+import com.mabotalb.book_network_api.exception.InvalidTokenException;
+import com.mabotalb.book_network_api.exception.NotEqualPasswordsException;
 import com.mabotalb.book_network_api.role.RoleRepository;
 import com.mabotalb.book_network_api.security.JwtService;
 import com.mabotalb.book_network_api.user.Token;
@@ -39,8 +42,11 @@ public class AuthenticationService {
     @Value("${application.mailing.frontend.activation-url}")
     private String activationUrl;
 
+    @Value("${application.mailing.frontend.reset-url}")
+    private String resetUrl;
+
     public void register(RegistrationRequest request) throws MessagingException {
-        var userRole = roleRepository.findByName("USER")
+        var userRole = this.roleRepository.findByName("USER")
                 .orElseThrow(() -> new EntityNotFoundException("Role User not found"));
 
         var user = User.builder()
@@ -94,7 +100,7 @@ public class AuthenticationService {
     }
 
     public LoginResponse login(LoginRequest request) {
-        var auth = authenticationManager.authenticate(
+        var auth = this.authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
         );
         var claims = new HashMap<String, Object>();
@@ -107,17 +113,62 @@ public class AuthenticationService {
 
     @Transactional
     public void activateAccount(String token) throws MessagingException {
-        Token savedToken = tokenRepository.findByToken(token)
-                .orElseThrow(() -> new RuntimeException("Invalid token"));
+        Token savedToken = this.tokenRepository.findByToken(token)
+                .orElseThrow(() -> new InvalidTokenException("Invalid token"));
 
         // Check if the token is expired
         if (LocalDateTime.now().isAfter(savedToken.getExpiresAt())) {
             this.sendValidationEmail(savedToken.getUser());
-            throw new RuntimeException("Activation token has expired, A new token has been sent to the same email");
+            throw new ExpiredTokenException("Activation token has expired, A new token has been sent to the same email");
         }
         var user = userRepository.findById(savedToken.getUser().getId())
                         .orElseThrow(() -> new UsernameNotFoundException("User not found"));
         user.setEnabled(true);
+        userRepository.save(user);
+        savedToken.setValidatedAt(LocalDateTime.now());
+        tokenRepository.save(savedToken);
+    }
+
+    public void forgotPassword(ForgotPasswordRequest request) throws MessagingException {
+        User user = this.userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new EntityNotFoundException("There's no registered user with this email"));
+
+        this.sendResetPasswordEmail(user);
+    }
+
+    private void sendResetPasswordEmail(User user) throws MessagingException {
+        var resetCode = generateAndSaveToken(user);
+        // Send email with reset code
+        emailService.sendEmail(
+                user.getEmail(),
+                user.fullName(),
+                EmailTemplateName.FORGOT_PASSWORD,
+                resetUrl,
+                resetCode,
+                "Password reset"
+        );
+    }
+
+    public void resetPassword(String token, ResetPasswordRequest request) throws MessagingException {
+        Token savedToken = this.tokenRepository.findByToken(token)
+               .orElseThrow(() -> new InvalidTokenException("Invalid token"));
+
+        // Check if the token is expired
+        if (LocalDateTime.now().isAfter(savedToken.getExpiresAt())) {
+            this.sendResetPasswordEmail(savedToken.getUser());
+            throw new ExpiredTokenException("Reset token has expired!, A new token has been sent to the same email");
+        }
+
+        var user = userRepository.findById(savedToken.getUser().getId())
+               .orElseThrow(() -> new EntityNotFoundException("User not found"));
+
+        // Check if the new password matches the confirmation password
+        if (!request.getNewPassword().equals(request.getConfirmationPassword())) {
+            throw new NotEqualPasswordsException("Passwords do not match");
+        }
+
+        // Update the user's password
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
         savedToken.setValidatedAt(LocalDateTime.now());
         tokenRepository.save(savedToken);
