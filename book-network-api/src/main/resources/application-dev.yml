@@ -36,6 +36,7 @@ application:
   mailing:
     frontend:
       activation-url: http://localhost:4200/activate-account
+      reset-url: http://localhost:4200/reset-password
   file:
     upload:
       photo-output-path: ./uploads
