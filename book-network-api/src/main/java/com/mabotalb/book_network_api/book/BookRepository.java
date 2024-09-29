@@ -18,4 +18,11 @@ public interface BookRepository extends JpaRepository<Book, Long>, JpaSpecificat
             AND book.owner.id != :userId
             """)
     Page<Book> findAllDisplayableBooks(Pageable pageable, Long userId);
+
+    @Query("""
+            SELECT book
+            FROM Book book
+            WHERE book.owner.id = :userId
+            """)
+    Page<Book> findAllBooksByOwner(Pageable pageable, Long userId);
 }
