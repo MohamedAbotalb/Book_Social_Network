@@ -1,7 +1,6 @@
 package com.mabotalb.book_network_api.book;
 
 import com.mabotalb.book_network_api.common.PageResponse;
-import com.mabotalb.book_network_api.exception.OperationNotPermittedException;
 import com.mabotalb.book_network_api.file.FileStorageService;
 import com.mabotalb.book_network_api.history.BookTransactionHistory;
 import com.mabotalb.book_network_api.history.BookTransactionHistoryRepository;
@@ -16,10 +15,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
-import java.util.Objects;
 
 import static com.mabotalb.book_network_api.book.BookSpecification.withOwnerId;
 
@@ -82,6 +79,24 @@ public class BookService {
                 books.getTotalPages(),
                 books.isFirst(),
                 books.isLast()
+        );
+    }
+
+    public PageResponse<BorrowedBookResponse> findAllBorrowedBooks(int page, int size, Authentication connectedUser) {
+        User user = (User) connectedUser.getPrincipal();
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdDate").descending());
+        Page<BookTransactionHistory> allBorrowedBooks = this.transactionHistoryRepository.findAllBorrowedBooks(pageable, user.getId());
+        List<BorrowedBookResponse> bookResponse = allBorrowedBooks.stream()
+                .map(bookMapper::toBorrowedBookResponse)
+                .toList();
+        return new PageResponse<>(
+                bookResponse,
+                allBorrowedBooks.getNumber(),
+                allBorrowedBooks.getSize(),
+                allBorrowedBooks.getTotalElements(),
+                allBorrowedBooks.getTotalPages(),
+                allBorrowedBooks.isFirst(),
+                allBorrowedBooks.isLast()
         );
     }
 }

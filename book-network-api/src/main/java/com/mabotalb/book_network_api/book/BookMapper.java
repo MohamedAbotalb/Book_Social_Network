@@ -33,4 +33,16 @@ public class BookMapper {
                 .sharable(book.isSharable())
                 .build();
     }
+
+    public BorrowedBookResponse toBorrowedBookResponse(BookTransactionHistory history) {
+        return BorrowedBookResponse.builder()
+                .id(history.getBook().getId())
+                .title(history.getBook().getTitle())
+                .authorName(history.getBook().getAuthorName())
+                .isbn(history.getBook().getIsbn())
+                .rate(history.getBook().getRate())
+                .returned(history.isReturned())
+                .returnApproved(history.isReturnApproved())
+                .build();
+    }
 }
