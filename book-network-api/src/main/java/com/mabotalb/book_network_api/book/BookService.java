@@ -31,7 +31,6 @@ public class BookService {
     private final BookMapper bookMapper;
     private final BookRepository bookRepository;
     private final BookTransactionHistoryRepository transactionHistoryRepository;
-    private final FileStorageService fileStorageService;
 
     public Long save(BookRequest request, Authentication connectedUser) {
         User user = (User) connectedUser.getPrincipal();
@@ -168,6 +167,24 @@ public class BookService {
                 .returned(false)
                 .returnApproved(false)
                 .build();
+        return this.transactionHistoryRepository.save(transactionHistory).getId();
+    }
+
+    public Long returnBorrowedBook(Long bookId, Authentication connectedUser) {
+        Book book = this.bookRepository.findById(bookId)
+                .orElseThrow(() -> new EntityNotFoundException("Book not found with ID: " + bookId));
+        if (book.isArchived() || !book.isSharable()) {
+            throw new OperationNotPermittedException("This requested book cannot be returned since it is archived or not sharable");
+        }
+        User user = (User) connectedUser.getPrincipal();
+
+        // Check if the user is the owner of this book
+        if (Objects.equals(book.getOwner().getId(), user.getId())) {
+            throw new OperationNotPermittedException("You cannot borrow or return your own book");
+        }
+        BookTransactionHistory transactionHistory = this.transactionHistoryRepository.findByBookIdAndUserId(bookId, user.getId())
+                .orElseThrow(() -> new OperationNotPermittedException("You didn't borrow this book"));
+
         return this.transactionHistoryRepository.save(transactionHistory).getId();
     }
 }
