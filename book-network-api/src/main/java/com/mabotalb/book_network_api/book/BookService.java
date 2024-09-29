@@ -16,7 +16,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Objects;
@@ -145,5 +144,30 @@ public class BookService {
         book.setArchived(!book.isArchived());
         this.bookRepository.save(book);
         return bookId;
+    }
+
+    public Long borrowBook(Long bookId, Authentication connectedUser) {
+        Book book = this.bookRepository.findById(bookId)
+                .orElseThrow(() -> new EntityNotFoundException("Book not found with ID: " + bookId));
+        if (book.isArchived() || !book.isSharable()) {
+            throw new OperationNotPermittedException("This requested book cannot be borrowed since it is archived or not sharable");
+        }
+        User user = (User) connectedUser.getPrincipal();
+
+        // Check if the user is the owner of this book
+        if (Objects.equals(book.getOwner().getId(), user.getId())) {
+            throw new OperationNotPermittedException("You cannot borrow your own book");
+        }
+        final boolean isAlreadyBorrowed = this.transactionHistoryRepository.isAlreadyBorrowedByUser(bookId, user.getId());
+        if (isAlreadyBorrowed) {
+            throw new OperationNotPermittedException("This requested book is already borrowed");
+        }
+        BookTransactionHistory transactionHistory = BookTransactionHistory.builder()
+                .book(book)
+                .user(user)
+                .returned(false)
+                .returnApproved(false)
+                .build();
+        return this.transactionHistoryRepository.save(transactionHistory).getId();
     }
 }

@@ -1,14 +1,12 @@
 package com.mabotalb.book_network_api.book;
 
 import com.mabotalb.book_network_api.common.PageResponse;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("books")
@@ -80,5 +78,13 @@ public class BookController {
             Authentication connectedUser
     ) {
         return ResponseEntity.ok(this.bookService.updateArchivedStatus(bookId, connectedUser));
+    }
+
+    @PostMapping("/borrow/{book-id}")
+    public ResponseEntity<Long> borrowBook(
+            @PathVariable("book-id") Long bookId,
+            Authentication connectedUser
+    ) {
+        return ResponseEntity.ok(this.bookService.borrowBook(bookId, connectedUser));
     }
 }
