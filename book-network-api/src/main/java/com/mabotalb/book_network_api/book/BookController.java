@@ -21,4 +21,9 @@ public class BookController {
     ) {
         return ResponseEntity.ok(this.bookService.save(request, connectedUser));
     }
+
+    @GetMapping("/{book-id}")
+    public ResponseEntity<BookResponse> findBook(@PathVariable("book-id") Long id) {
+        return ResponseEntity.ok(this.bookService.findById(id));
+    }
 }
