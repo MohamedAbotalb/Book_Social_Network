@@ -1,10 +1,12 @@
+version: '3.8'
+
 services:
   postgres:
-    container_name: postgre-sql-book_social_network
+    container_name: postgres-bsn-db
     image: postgres
     environment:
-      POSTGRES_USER: username
-      POSTGRES_PASSWORD: password
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
       PGDATA: /var/lib/postgresql/data
       POSTGRES_DB: book_social_network
     volumes:
@@ -12,21 +14,42 @@ services:
     ports:
       - 5433:5432
     networks:
-      - spring-demo
+      - book-network
     restart: unless-stopped
 
   maildev:
-    container_name: mail-dev-book_social_network
+    container_name: mail-dev-bsn
     image: maildev/maildev
     ports:
       - 1080:1080
       - 1025:1025
+    networks:
+      - book-network
+    restart: unless-stopped
+
+  spring-boot-app:
+    build: .
+    container_name: bsn-api
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/book_social_network
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: PASSword@2468
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_MAIL_HOST: maildev
+      SPRING_MAIL_PORT: 1025
+    ports:
+      - '8088:8088'
+    depends_on:
+      - postgres
+      - maildev
+    networks:
+      - book-network
+    restart: unless-stopped
 
 networks:
-  spring-demo:
+  book-network:
     driver: bridge
 
 volumes:
   postgres:
     driver: local
-  
