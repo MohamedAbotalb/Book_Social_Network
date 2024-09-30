@@ -1,9 +1,6 @@
 package com.mabotalb.book_network_api.handler;
 
-import com.mabotalb.book_network_api.exception.ExpiredTokenException;
-import com.mabotalb.book_network_api.exception.InvalidTokenException;
-import com.mabotalb.book_network_api.exception.NotEqualPasswordsException;
-import com.mabotalb.book_network_api.exception.OperationNotPermittedException;
+import com.mabotalb.book_network_api.exception.*;
 import jakarta.mail.MessagingException;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.http.ResponseEntity;
@@ -137,6 +134,16 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(NotEqualPasswordsException.class)
     public ResponseEntity<ExceptionResponse> handleException(NotEqualPasswordsException ex) {
         return ResponseEntity.status(BAD_REQUEST)
+                .body(
+                        ExceptionResponse.builder()
+                                .error(ex.getMessage())
+                                .build()
+                );
+    }
+
+    @ExceptionHandler(UserAlreadyExistsException.class)
+    public ResponseEntity<ExceptionResponse> handleException(UserAlreadyExistsException ex) {
+        return ResponseEntity.status(CONFLICT)
                 .body(
                         ExceptionResponse.builder()
                                 .error(ex.getMessage())
