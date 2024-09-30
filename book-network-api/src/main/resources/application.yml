@@ -3,7 +3,9 @@ spring:
     active: dev
     servlet:
       multipart:
-        max-file-size: 50MB
+        max-file-size: 10MB
+  cache:
+    type: caffeine
 springdoc:
   default-produces-media-type: application/json
   swagger-ui:
