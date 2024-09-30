@@ -128,7 +128,7 @@ public class BookService {
         if (!Objects.equals(book.getOwner().getId(), user.getId())) {
             throw new OperationNotPermittedException("You cannot update others books sharable status");
         }
-        book.setSharable(!book.isSharable());
+        book.setShareable(!book.isShareable());
         this.bookRepository.save(book);
         return bookId;
     }
@@ -150,7 +150,7 @@ public class BookService {
     public Long borrowBook(Long bookId, Authentication connectedUser) {
         Book book = this.bookRepository.findById(bookId)
                 .orElseThrow(() -> new EntityNotFoundException("Book not found with ID: " + bookId));
-        if (book.isArchived() || !book.isSharable()) {
+        if (book.isArchived() || !book.isShareable()) {
             throw new OperationNotPermittedException("This requested book cannot be borrowed since it is archived or not sharable");
         }
         User user = (User) connectedUser.getPrincipal();
@@ -175,7 +175,7 @@ public class BookService {
     public Long returnBorrowedBook(Long bookId, Authentication connectedUser) {
         Book book = this.bookRepository.findById(bookId)
                 .orElseThrow(() -> new EntityNotFoundException("Book not found with ID: " + bookId));
-        if (book.isArchived() || !book.isSharable()) {
+        if (book.isArchived() || !book.isShareable()) {
             throw new OperationNotPermittedException("This requested book cannot be returned since it is archived or not sharable");
         }
         User user = (User) connectedUser.getPrincipal();
@@ -193,7 +193,7 @@ public class BookService {
     public Long approveReturnBorrowedBook(Long bookId, Authentication connectedUser) {
         Book book = this.bookRepository.findById(bookId)
                 .orElseThrow(() -> new EntityNotFoundException("Book not found with ID: " + bookId));
-        if (book.isArchived() || !book.isSharable()) {
+        if (book.isArchived() || !book.isShareable()) {
             throw new OperationNotPermittedException("This requested book cannot be returned since it is archived or not sharable");
         }
         User user = (User) connectedUser.getPrincipal();

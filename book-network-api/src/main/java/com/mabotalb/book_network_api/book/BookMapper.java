@@ -14,7 +14,7 @@ public class BookMapper {
                 .authorName(request.getAuthorName())
                 .isbn(request.getIsbn())
                 .synopsis(request.getSynopsis())
-                .sharable(request.isSharable())
+                .shareable(request.isShareable())
                 .archived(false)
                 .build();
     }
@@ -30,7 +30,7 @@ public class BookMapper {
                 .cover(FileUtils.readFileLocation(book.getBookCover()))
                 .rate(book.getRate())
                 .archived(book.isArchived())
-                .sharable(book.isSharable())
+                .shareable(book.isShareable())
                 .build();
     }
 

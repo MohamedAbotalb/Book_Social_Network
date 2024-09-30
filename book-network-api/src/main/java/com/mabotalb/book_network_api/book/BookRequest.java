@@ -29,5 +29,5 @@ public class BookRequest {
 
     @NotNull(message = "Book shareable is required")
     @NotEmpty(message = "Book shareable is required")
-    private boolean sharable;
+    private boolean shareable;
 }
