@@ -28,7 +28,7 @@ public class BookController {
             @ApiResponse(responseCode = "400", description = "Invalid request data"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
-    public ResponseEntity<Long> saveBook(
+    public ResponseEntity<BookResponse> saveBook(
             @Valid @RequestBody BookRequest request, Authentication connectedUser
     ) {
         return ResponseEntity.ok(this.bookService.save(request, connectedUser));

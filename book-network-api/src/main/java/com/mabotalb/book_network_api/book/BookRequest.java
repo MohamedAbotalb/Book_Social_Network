@@ -9,8 +9,6 @@ import lombok.*;
 @Builder
 public class BookRequest {
 
-    private Long id;
-
     @NotNull(message = "Book title is required")
     @NotEmpty(message = "Book title is required")
     private String title;
@@ -28,6 +26,5 @@ public class BookRequest {
     private String synopsis;
 
     @NotNull(message = "Book shareable is required")
-    @NotEmpty(message = "Book shareable is required")
     private boolean shareable;
 }

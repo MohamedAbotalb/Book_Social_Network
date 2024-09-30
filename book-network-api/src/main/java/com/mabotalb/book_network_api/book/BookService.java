@@ -9,6 +9,9 @@ import com.mabotalb.book_network_api.user.User;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -18,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -26,27 +30,32 @@ import static com.mabotalb.book_network_api.book.BookSpecification.withOwnerId;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@Transactional
 public class BookService {
+    private static final List<String> ALLOWED_FILE_TYPES = Arrays.asList("image/png", "image/jpeg", "image/jpg");
 
     private final BookMapper bookMapper;
     private final BookRepository bookRepository;
     private final BookTransactionHistoryRepository transactionHistoryRepository;
     private final FileStorageService fileStorageService;
 
-    public Long save(BookRequest request, Authentication connectedUser) {
+    @Transactional
+    @CachePut(value = "books", key = "#result.id")
+    public BookResponse save(BookRequest request, Authentication connectedUser) {
         User user = (User) connectedUser.getPrincipal();
         Book book = bookMapper.toBook(request);
         book.setOwner(user);
-        return this.bookRepository.save(book).getId();
+        Book savedBook = this.bookRepository.save(book);
+        return bookMapper.toBookResponse(savedBook);
     }
 
+    @Cacheable(value = "book", key = "#id")
     public BookResponse findById(Long id) {
         return this.bookRepository.findById(id)
                 .map(bookMapper::toBookResponse)
                 .orElseThrow(() -> new EntityNotFoundException("Book not found with ID: " + id));
     }
 
+    @Cacheable(value = "books", key = "{#page, #size}")
     public PageResponse<BookResponse> findAllBooks(int page, int size, Authentication connectedUser) {
         User user = (User) connectedUser.getPrincipal();
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdDate").descending());
@@ -66,6 +75,7 @@ public class BookService {
         );
     }
 
+    @Cacheable(value = "booksByOwner", key = "{#page, #size, #connectedUser.name}")
     public PageResponse<BookResponse> findAllBooksByOwner(int page, int size, Authentication connectedUser) {
         User user = (User) connectedUser.getPrincipal();
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdDate").descending());
@@ -85,6 +95,7 @@ public class BookService {
         );
     }
 
+    @Cacheable(value = "borrowedBooks", key = "{#page, #size, #connectedUser.name}")
     public PageResponse<BorrowedBookResponse> findAllBorrowedBooks(int page, int size, Authentication connectedUser) {
         User user = (User) connectedUser.getPrincipal();
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdDate").descending());
@@ -103,6 +114,7 @@ public class BookService {
         );
     }
 
+    @Cacheable(value = "returnedBooks", key = "{#page, #size, #connectedUser.name}")
     public PageResponse<BorrowedBookResponse> findAllReturnedBooks(int page, int size, Authentication connectedUser) {
         User user = (User) connectedUser.getPrincipal();
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdDate").descending());
@@ -121,6 +133,7 @@ public class BookService {
         );
     }
 
+    @CacheEvict(value = "books", key = "#bookId")
     public Long updateSharableStatus(Long bookId, Authentication connectedUser) {
         Book book = this.bookRepository.findById(bookId)
                 .orElseThrow(() -> new EntityNotFoundException("Book not found with ID: " + bookId));
@@ -133,6 +146,7 @@ public class BookService {
         return bookId;
     }
 
+    @CacheEvict(value = "books", key = "#bookId")
     public Long updateArchivedStatus(Long bookId, Authentication connectedUser) {
         Book book = this.bookRepository.findById(bookId)
                 .orElseThrow(() -> new EntityNotFoundException("Book not found with ID: " + bookId));
@@ -147,6 +161,7 @@ public class BookService {
         return bookId;
     }
 
+    @CacheEvict(value = "books", key = "#bookId")
     public Long borrowBook(Long bookId, Authentication connectedUser) {
         Book book = this.bookRepository.findById(bookId)
                 .orElseThrow(() -> new EntityNotFoundException("Book not found with ID: " + bookId));
@@ -172,6 +187,7 @@ public class BookService {
         return this.transactionHistoryRepository.save(transactionHistory).getId();
     }
 
+    @CacheEvict(value = "books", key = "#bookId")
     public Long returnBorrowedBook(Long bookId, Authentication connectedUser) {
         Book book = this.bookRepository.findById(bookId)
                 .orElseThrow(() -> new EntityNotFoundException("Book not found with ID: " + bookId));
@@ -190,6 +206,7 @@ public class BookService {
         return this.transactionHistoryRepository.save(transactionHistory).getId();
     }
 
+    @CacheEvict(value = "books", key = "#bookId")
     public Long approveReturnBorrowedBook(Long bookId, Authentication connectedUser) {
         Book book = this.bookRepository.findById(bookId)
                 .orElseThrow(() -> new EntityNotFoundException("Book not found with ID: " + bookId));
@@ -208,10 +225,21 @@ public class BookService {
         return this.transactionHistoryRepository.save(transactionHistory).getId();
     }
 
+    @CacheEvict(value = "books", key = "#bookId")
     public void uploadBookCoverPicture(MultipartFile file, Authentication connectedUser, Long bookId) {
         Book book = this.bookRepository.findById(bookId)
                 .orElseThrow(() -> new EntityNotFoundException("Book not found with ID: " + bookId));
         User user = (User) connectedUser.getPrincipal();
+
+        // Check if the file is valid image type
+        if (!ALLOWED_FILE_TYPES.contains(file.getContentType())) {
+            throw new IllegalArgumentException("Invalid file type. Only JPEG and PNG images are allowed.");
+        }
+
+        // Check if the user is the owner of this book
+        if (!Objects.equals(book.getOwner().getId(), user.getId())) {
+            throw new OperationNotPermittedException("You cannot upload a cover picture for another book");
+        }
         var bookCover = this.fileStorageService.saveFile(file, user.getId());
         book.setBookCover(bookCover);
         this.bookRepository.save(book);
