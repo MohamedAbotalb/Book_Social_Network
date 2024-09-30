@@ -120,6 +120,7 @@ The API uses PostgreSQL as the database. The main entities include:
 
 - **Spring Boot 3** for the core application.
 - **Spring Security 6** for authentication and authorization.
+- **Spring Data JPA** fpr data persistance.
 - **JWT** for token-based security.
 - **PostgreSQL** for the database.
 - **Caffeine** for caching.
