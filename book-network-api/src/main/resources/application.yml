@@ -6,6 +6,9 @@ spring:
         max-file-size: 50MB
 springdoc:
   default-produces-media-type: application/json
+  swagger-ui:
+    operations-sorter: alpha
+    tags-sorter: alpha
 
 server:
   servlet:
