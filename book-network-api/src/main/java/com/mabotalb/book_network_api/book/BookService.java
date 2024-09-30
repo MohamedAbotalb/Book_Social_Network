@@ -134,7 +134,7 @@ public class BookService {
     }
 
     @CacheEvict(value = "books", key = "#bookId")
-    public Long updateSharableStatus(Long bookId, Authentication connectedUser) {
+    public BookResponse updateSharableStatus(Long bookId, Authentication connectedUser) {
         Book book = this.bookRepository.findById(bookId)
                 .orElseThrow(() -> new EntityNotFoundException("Book not found with ID: " + bookId));
         User user = (User) connectedUser.getPrincipal();
@@ -142,12 +142,12 @@ public class BookService {
             throw new OperationNotPermittedException("You cannot update others books sharable status");
         }
         book.setShareable(!book.isShareable());
-        this.bookRepository.save(book);
-        return bookId;
+        Book savedBook = this.bookRepository.save(book);
+        return bookMapper.toBookResponse(savedBook);
     }
 
     @CacheEvict(value = "books", key = "#bookId")
-    public Long updateArchivedStatus(Long bookId, Authentication connectedUser) {
+    public BookResponse updateArchivedStatus(Long bookId, Authentication connectedUser) {
         Book book = this.bookRepository.findById(bookId)
                 .orElseThrow(() -> new EntityNotFoundException("Book not found with ID: " + bookId));
         User user = (User) connectedUser.getPrincipal();
@@ -157,12 +157,12 @@ public class BookService {
             throw new OperationNotPermittedException("You cannot update others books archived status");
         }
         book.setArchived(!book.isArchived());
-        this.bookRepository.save(book);
-        return bookId;
+        Book savedBook = this.bookRepository.save(book);
+        return bookMapper.toBookResponse(savedBook);
     }
 
     @CacheEvict(value = "books", key = "#bookId")
-    public Long borrowBook(Long bookId, Authentication connectedUser) {
+    public void borrowBook(Long bookId, Authentication connectedUser) {
         Book book = this.bookRepository.findById(bookId)
                 .orElseThrow(() -> new EntityNotFoundException("Book not found with ID: " + bookId));
         if (book.isArchived() || !book.isShareable()) {
@@ -184,11 +184,11 @@ public class BookService {
                 .returned(false)
                 .returnApproved(false)
                 .build();
-        return this.transactionHistoryRepository.save(transactionHistory).getId();
+        this.transactionHistoryRepository.save(transactionHistory);
     }
 
     @CacheEvict(value = "books", key = "#bookId")
-    public Long returnBorrowedBook(Long bookId, Authentication connectedUser) {
+    public void returnBorrowedBook(Long bookId, Authentication connectedUser) {
         Book book = this.bookRepository.findById(bookId)
                 .orElseThrow(() -> new EntityNotFoundException("Book not found with ID: " + bookId));
         if (book.isArchived() || !book.isShareable()) {
@@ -203,11 +203,11 @@ public class BookService {
         BookTransactionHistory transactionHistory = this.transactionHistoryRepository.findByBookIdAndUserId(bookId, user.getId())
                 .orElseThrow(() -> new OperationNotPermittedException("You didn't borrow this book"));
 
-        return this.transactionHistoryRepository.save(transactionHistory).getId();
+        this.transactionHistoryRepository.save(transactionHistory);
     }
 
     @CacheEvict(value = "books", key = "#bookId")
-    public Long approveReturnBorrowedBook(Long bookId, Authentication connectedUser) {
+    public void approveReturnBorrowedBook(Long bookId, Authentication connectedUser) {
         Book book = this.bookRepository.findById(bookId)
                 .orElseThrow(() -> new EntityNotFoundException("Book not found with ID: " + bookId));
         if (book.isArchived() || !book.isShareable()) {
@@ -222,7 +222,7 @@ public class BookService {
         BookTransactionHistory transactionHistory = this.transactionHistoryRepository.findByBookIdAndOwnerId(bookId, user.getId())
                 .orElseThrow(() -> new OperationNotPermittedException("The book is not returned yet. You cannot approve its return"));
         transactionHistory.setReturnApproved(true);
-        return this.transactionHistoryRepository.save(transactionHistory).getId();
+        this.transactionHistoryRepository.save(transactionHistory);
     }
 
     @CacheEvict(value = "books", key = "#bookId")

@@ -109,7 +109,7 @@ public class BookController {
             @ApiResponse(responseCode = "404", description = "Book not found"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
-    public ResponseEntity<Long> updateSharableStatus(
+    public ResponseEntity<BookResponse> updateSharableStatus(
             @PathVariable("book-id") Long bookId,
             Authentication connectedUser
     ) {
@@ -123,7 +123,7 @@ public class BookController {
             @ApiResponse(responseCode = "404", description = "Book not found"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
-    public ResponseEntity<Long> updateArchivedStatus(
+    public ResponseEntity<BookResponse> updateArchivedStatus(
             @PathVariable("book-id") Long bookId,
             Authentication connectedUser
     ) {
@@ -137,11 +137,12 @@ public class BookController {
             @ApiResponse(responseCode = "404", description = "Book not found"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
-    public ResponseEntity<Long> borrowBook(
+    public ResponseEntity<String> borrowBook(
             @PathVariable("book-id") Long bookId,
             Authentication connectedUser
     ) {
-        return ResponseEntity.ok(this.bookService.borrowBook(bookId, connectedUser));
+        this.bookService.borrowBook(bookId, connectedUser);
+        return ResponseEntity.ok("Book borrowed successfully");
     }
 
     @PatchMapping("/borrow/return/{book-id}")
@@ -151,11 +152,12 @@ public class BookController {
             @ApiResponse(responseCode = "404", description = "Book not found"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
-    public ResponseEntity<Long> returnBorrowedBook(
+    public ResponseEntity<String> returnBorrowedBook(
             @PathVariable("book-id") Long bookId,
             Authentication connectedUser
     ) {
-        return ResponseEntity.ok(this.bookService.returnBorrowedBook(bookId, connectedUser));
+        this.bookService.returnBorrowedBook(bookId, connectedUser);
+        return ResponseEntity.ok("Book returned successfully");
     }
 
     @PatchMapping("/borrow/return/approve/{book-id}")
@@ -165,11 +167,12 @@ public class BookController {
             @ApiResponse(responseCode = "404", description = "Book not found"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
-    public ResponseEntity<Long> approveReturnBorrowedBook(
+    public ResponseEntity<String> approveReturnBorrowedBook(
             @PathVariable("book-id") Long bookId,
             Authentication connectedUser
     ) {
-        return ResponseEntity.ok(this.bookService.approveReturnBorrowedBook(bookId, connectedUser));
+        this.bookService.approveReturnBorrowedBook(bookId, connectedUser);
+        return ResponseEntity.ok("Book return approved successfully");
     }
 
     @PostMapping(value = "/cover/{book-id}", consumes = "multipart/form-data")
