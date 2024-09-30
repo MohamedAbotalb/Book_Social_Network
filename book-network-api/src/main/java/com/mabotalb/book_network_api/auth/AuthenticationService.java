@@ -5,6 +5,7 @@ import com.mabotalb.book_network_api.email.EmailTemplateName;
 import com.mabotalb.book_network_api.exception.ExpiredTokenException;
 import com.mabotalb.book_network_api.exception.InvalidTokenException;
 import com.mabotalb.book_network_api.exception.NotEqualPasswordsException;
+import com.mabotalb.book_network_api.exception.UserAlreadyExistsException;
 import com.mabotalb.book_network_api.role.RoleRepository;
 import com.mabotalb.book_network_api.security.JwtService;
 import com.mabotalb.book_network_api.user.Token;
@@ -48,6 +49,13 @@ public class AuthenticationService {
     public void register(RegistrationRequest request) throws MessagingException {
         var userRole = this.roleRepository.findByName("USER")
                 .orElseThrow(() -> new EntityNotFoundException("Role User not found"));
+
+        // Check if the user is already exist
+        var existingUser = this.userRepository.findByEmail(request.getEmail());
+
+        if (existingUser.isPresent()) {
+            throw new UserAlreadyExistsException("User with this email already exists");
+        }
 
         var user = User.builder()
                 .firstName(request.getFirstName())
