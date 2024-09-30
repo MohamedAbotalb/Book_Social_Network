@@ -6,6 +6,7 @@ import com.mabotalb.book_network_api.exception.ExpiredTokenException;
 import com.mabotalb.book_network_api.exception.InvalidTokenException;
 import com.mabotalb.book_network_api.exception.NotEqualPasswordsException;
 import com.mabotalb.book_network_api.exception.UserAlreadyExistsException;
+import com.mabotalb.book_network_api.role.Role;
 import com.mabotalb.book_network_api.role.RoleRepository;
 import com.mabotalb.book_network_api.security.JwtService;
 import com.mabotalb.book_network_api.user.Token;
@@ -16,6 +17,7 @@ import jakarta.mail.MessagingException;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -46,9 +48,14 @@ public class AuthenticationService {
     @Value("${application.mailing.frontend.reset-url}")
     private String resetUrl;
 
-    public void register(RegistrationRequest request) throws MessagingException {
-        var userRole = this.roleRepository.findByName("USER")
+    @Cacheable("roles")
+    public Role getUserRole() {
+        return this.roleRepository.findByName("USER")
                 .orElseThrow(() -> new EntityNotFoundException("Role User not found"));
+    }
+
+    public void register(RegistrationRequest request) throws MessagingException {
+        var userRole = this.getUserRole();
 
         // Check if the user is already exist
         var existingUser = this.userRepository.findByEmail(request.getEmail());
@@ -119,10 +126,15 @@ public class AuthenticationService {
         return LoginResponse.builder().token(jwtToken).build();
     }
 
+    @Cacheable(value = "tokens", key = "#token")
+    public Token getToken(String token) {
+        return this.tokenRepository.findByToken(token)
+                .orElseThrow(() -> new InvalidTokenException("Invalid token"));
+    }
+
     @Transactional
     public void activateAccount(String token) throws MessagingException {
-        Token savedToken = this.tokenRepository.findByToken(token)
-                .orElseThrow(() -> new InvalidTokenException("Invalid token"));
+        Token savedToken = this.getToken(token);
 
         // Check if the token is expired
         if (LocalDateTime.now().isAfter(savedToken.getExpiresAt())) {
@@ -158,8 +170,7 @@ public class AuthenticationService {
     }
 
     public void resetPassword(String token, ResetPasswordRequest request) throws MessagingException {
-        Token savedToken = this.tokenRepository.findByToken(token)
-               .orElseThrow(() -> new InvalidTokenException("Invalid token"));
+        Token savedToken = this.getToken(token);
 
         // Check if the token is expired
         if (LocalDateTime.now().isAfter(savedToken.getExpiresAt())) {
