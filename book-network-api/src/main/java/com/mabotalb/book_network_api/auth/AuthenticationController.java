@@ -59,10 +59,11 @@ public class AuthenticationController {
             @ApiResponse(responseCode = "400", description = "Bad request, invalid token"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
-    public void activate(
+    public ResponseEntity<?> activate(
             @Pattern(regexp = "^\\d{6}$", message = "Token should be 6 digits numbers only") @RequestParam String token
     ) throws MessagingException {
         this.authenticationService.activateAccount(token);
+        return ResponseEntity.ok().build();
     }
 
     // Implement the forgot password method
