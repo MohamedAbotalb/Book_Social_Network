@@ -7,6 +7,7 @@ import com.mabotalb.book_network_api.exception.OperationNotPermittedException;
 import com.mabotalb.book_network_api.user.User;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -24,6 +25,7 @@ public class FeedbackService {
     private final FeedbackRepository feedbackRepository;
     private final FeedbackMapper feedbackMapper;
 
+    @Cacheable(value = "feedbacks", key = "#result.id")
     public Long save(FeedbackRequest request, Authentication connectedUser) {
         Book book = this.bookRepository.findById(request.getBookId())
                 .orElseThrow(() -> new EntityNotFoundException("Book not found with ID: " + request.getBookId()));
@@ -40,6 +42,7 @@ public class FeedbackService {
         return this.feedbackRepository.save(feedback).getId();
     }
 
+    @Cacheable(value = "feedbacks", key = "{#bookId, #page, #size}")
     public PageResponse<FeedbackResponse> findAllFeedbacksByBook(Long bookId, int page, int size, Authentication connectedUser) {
         Pageable pageable = PageRequest.of(page, size);
         User user = (User) connectedUser.getPrincipal();
