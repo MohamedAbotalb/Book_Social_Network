@@ -188,5 +188,5 @@ http://localhost:8088/api/v1/swagger-ui/index.html
 - [Book Social Network App](https://www.youtube.com/watch?v=WuPa_XoWlJU&pp=ygUTYm9vayBzb2NpYWwgbmV0d29yaw%3D%3D)
 - [Spring Boot Cache](https://medium.com/@geonikpal/spring-boot-cache-18ab22a09f42)
 - [Implement JWT authentication in a Spring Boot 3 application](https://medium.com/@tericcabrel/implement-jwt-authentication-in-a-spring-boot-3-application-5839e4fd8fac)
-- [Using Docker Compose with Spring Boot and PostgreSQL](https://devcracker.medium.com/how-to-add-a-link-or-hyperlink-in-readme-md-file-68752bb6499e)
+- [Using Docker Compose with Spring Boot and PostgreSQL](https://medium.com/@saygiligozde/using-docker-compose-with-spring-boot-and-postgresql-235031106f9f)
 - [Documenting a Spring REST API Using OpenAPI 3.0](https://www.baeldung.com/spring-rest-openapi-documentation)
